@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkog_frontend=self.webpackChunkog_frontend||[]).push([[821],{821(e,o,r){r.d(o,{default:()=>a.A});var a=r(722);const{Axios:s,AxiosError:t,CanceledError:n,isCancel:d,CancelToken:l,VERSION:c,all:i,Cancel:C,isAxiosError:f,spread:A,toFormData:p,AxiosHeaders:u,HttpStatusCode:g,formToJSON:k,getAdapter:x,mergeConfig:E}=a.A}}]);
+//# sourceMappingURL=821.d3436b72.chunk.js.map
