@@ -243,11 +243,22 @@ const AdminMessaging = ({ token, currentUser }) => {
                 const res = await axios.get(`${API}/messages/${selectedEmployee.user_id}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
-                setMessages(res.data);
+                const incoming = res.data || [];
+                setMessages(incoming);
+                // While the chat is open, keep marking incoming messages as read
+                const hasUnread = incoming.some(
+                    (m) => m.sender_id !== currentUser.id && !m.is_read
+                );
+                if (hasUnread) {
+                    await axios.put(`${API}/messages/read/${selectedEmployee.user_id}`, {}, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    fetchConversations();
+                }
             } catch { }
         }, 5000);
         return () => clearInterval(interval);
-    }, [fetchMessages, selectedEmployee, token]);
+    }, [fetchMessages, selectedEmployee, token, currentUser.id, fetchConversations]);
 
     const handleSelectEmployee = (emp) => {
         setSelectedEmployee(emp);

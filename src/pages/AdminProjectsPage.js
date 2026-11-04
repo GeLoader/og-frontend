@@ -148,12 +148,12 @@ export const AdminProjectsPage = () => {
   };
 
   const resetProjectForm = () => {
-    setProjectForm({ id: '', name: '', description: '' });
+    setProjectForm({ id: '', name: '', description: '', status: 'active' });
     setIsEditingProject(false);
   };
 
   const resetTaskForm = () => {
-    setTaskForm({ id: '', name: '', description: '', project_id: '' });
+    setTaskForm({ id: '', name: '', description: '', project_id: '', status: 'active' });
     setIsEditingTask(false);
   };
 
@@ -166,7 +166,8 @@ export const AdminProjectsPage = () => {
     setProjectForm({
       id: project.id,
       name: project.name,
-      description: project.description || ''
+      description: project.description || '',
+      status: project.status || 'active' // keep the current status on update
     });
     setIsEditingProject(true);
     setShowProjectDialog(true);
@@ -182,7 +183,8 @@ export const AdminProjectsPage = () => {
       id: task.id,
       name: task.name,
       description: task.description || '',
-      project_id: task.project_id
+      project_id: task.project_id,
+      status: task.status || 'active' // keep the current status on update
     });
     setIsEditingTask(true);
     setShowTaskDialog(true);

@@ -570,6 +570,7 @@ export const AdminTeamPage = () => {
                     <input
                       type="checkbox"
                       checked={selectedProjects.includes(project.id)}
+                      onClick={(e) => e.stopPropagation()}
                       onChange={() => toggleProjectSelection(project.id)}
                       className="h-4 w-4 rounded border-gray-300"
                     />

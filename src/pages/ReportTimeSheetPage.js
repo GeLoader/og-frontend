@@ -284,6 +284,7 @@ export const ReportTimeSheetPage = () => {
         }
 
         if (selectedProjectId !== 'all') params.project_id = selectedProjectId;
+        if (selectedTaskId !== 'all') params.task_id = selectedTaskId;
 
         const response = await axios.get(`${API}/time-entries`, {
           params,
@@ -299,7 +300,7 @@ export const ReportTimeSheetPage = () => {
     };
 
     fetchTimeEntries();
-  }, [viewStartDate, viewEndDate, selectedUserId, selectedProjectId, token, user, isAdmin]);
+  }, [viewStartDate, viewEndDate, selectedUserId, selectedProjectId, selectedTaskId, token, user, isAdmin]);
 
   // Group and aggregate time entries
   const groupedData = useMemo(() => {
@@ -391,10 +392,11 @@ export const ReportTimeSheetPage = () => {
 
   // Format hours display
   const formatHours = (hours) => {
-    if (hours === 0) return '0';
-    const h = Math.floor(hours);
-    const m = Math.round((hours - h) * 60);
-    return `${h}:${m.toString().padStart(2, '0')}`;
+    if (!hours) return '0';
+    const totalMinutes = Math.round(hours * 60);
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${h}:${String(m).padStart(2, '0')}`;
   };
 
   // Toggle row expansion
@@ -419,6 +421,10 @@ export const ReportTimeSheetPage = () => {
         params.user_id = user.id;
       } else if (selectedUserId !== 'all') {
         params.user_id = selectedUserId;
+      }
+
+      if (selectedProjectId !== 'all') {
+        params.project_id = selectedProjectId;
       }
 
       const response = await axios.get(`${API}/reports/export/pdf`, {

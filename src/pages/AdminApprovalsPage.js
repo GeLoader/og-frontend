@@ -59,12 +59,8 @@ const TimeLogModal = ({ isOpen, onClose, timeEntry, onSave, onDelete, projects, 
       setStartTime(formatTime(startDate));
       setEndTime(formatTime(endDate));
 
-      // Format date
-      const entryDate = new Date(timeEntry.date);
-      const year = entryDate.getFullYear();
-      const month = String(entryDate.getMonth() + 1).padStart(2, '0');
-      const day = String(entryDate.getDate()).padStart(2, '0');
-      setDate(`${year}-${month}-${day}`);
+      // Format date (avoid Date/UTC round-trip so the day cannot shift)
+      setDate(String(timeEntry.date || '').slice(0, 10));
 
       setProjectId(timeEntry.project_id || '');
       setTaskId(timeEntry.task_id || '');
@@ -138,9 +134,9 @@ const TimeLogModal = ({ isOpen, onClose, timeEntry, onSave, onDelete, projects, 
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const durationMinutes = parseTimeToMinutes(duration);
-    onSave({
+    const ok = await onSave({
       ...timeEntry,
       duration: durationMinutes * 60, // Convert back to seconds for API
       startTime,
@@ -149,13 +145,14 @@ const TimeLogModal = ({ isOpen, onClose, timeEntry, onSave, onDelete, projects, 
       project_id: projectId,
       task_id: taskId
     });
-    onClose();
+    // Only close when the save actually succeeded
+    if (ok !== false) onClose();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this time log?')) {
-      onDelete(timeEntry);
-      onClose();
+      const ok = await onDelete(timeEntry);
+      if (ok !== false) onClose();
     }
   };
 
@@ -179,7 +176,13 @@ const TimeLogModal = ({ isOpen, onClose, timeEntry, onSave, onDelete, projects, 
           {/* Project */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Project</label>
-            <Select value={projectId} onValueChange={setProjectId}>
+            <Select
+              value={projectId}
+              onValueChange={(value) => {
+                setProjectId(value);
+                setTaskId(''); // tasks belong to a project, reset the stale selection
+              }}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select project" />
               </SelectTrigger>
@@ -324,8 +327,10 @@ export const AdminApprovalsPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTimesheets(response.data);
+      return response.data;
     } catch (error) {
       console.error('Failed to fetch timesheets:', error);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -365,14 +370,27 @@ export const AdminApprovalsPage = () => {
 
   const fetchTimeEntries = async (timesheet) => {
     try {
+      setTimeEntries([]);
       const response = await axios.get(
         `${API}/time-entries?start_date=${timesheet.week_start}&end_date=${timesheet.week_end}&user_id=${timesheet.user_id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setTimeEntries(response.data);
+      return true;
     } catch (error) {
       console.error('Failed to fetch time entries:', error);
       toast.error(t('approvals.messages.loadEntriesError'));
+      return false;
+    }
+  };
+
+  // Re-read the timesheet so its total_hours matches the edited entries
+  const refreshSelectedTimesheet = async (timesheetId) => {
+    if (!timesheetId) return;
+    const freshList = await fetchTimesheets();
+    const fresh = (freshList || []).find(ts => ts.id === timesheetId);
+    if (fresh) {
+      setSelectedTimesheet(fresh);
     }
   };
 
@@ -405,6 +423,7 @@ export const AdminApprovalsPage = () => {
   const openReviewDialog = (timesheet, action) => {
     setSelectedTimesheet(timesheet);
     setReviewAction(action);
+    setReviewComment(''); // never leak a previous comment into the next review
     setShowReviewDialog(true);
   };
 
@@ -417,8 +436,8 @@ export const AdminApprovalsPage = () => {
     try {
       setLoadingViewEntries(timesheet.id);
       setSelectedTimesheet(timesheet);
-      await fetchTimeEntries(timesheet);
-      setShowEntriesDialog(true);
+      const ok = await fetchTimeEntries(timesheet);
+      if (ok) setShowEntriesDialog(true);
     } catch (error) {
       console.error('Failed to fetch entries:', error);
     } finally {
@@ -444,16 +463,21 @@ export const AdminApprovalsPage = () => {
   };
 
   const handleSaveTimeEntry = async (updatedEntry) => {
-    try {
-      // Validate that a project is selected
-      if (!updatedEntry.project_id) {
-        toast.error('Please select a project');
-        return;
-      }
+    // Validate that a project is selected
+    if (!updatedEntry.project_id) {
+      toast.error('Please select a project');
+      return false;
+    }
 
+    setIsSavingEntry(true);
+    try {
       // Create datetime strings
       const startDateTime = new Date(`${updatedEntry.date}T${updatedEntry.startTime}:00`);
       const endDateTime = new Date(`${updatedEntry.date}T${updatedEntry.endTime}:00`);
+      // Overnight shift: end time on the next day instead of a negative duration
+      if (endDateTime < startDateTime) {
+        endDateTime.setDate(endDateTime.getDate() + 1);
+      }
 
       const payload = {
         project_id: updatedEntry.project_id,
@@ -469,42 +493,40 @@ export const AdminApprovalsPage = () => {
       });
 
       toast.success(t('approvals.messages.entryUpdated'));
-      setShowEditEntryDialog(false);
-      setEditingEntry(null);
 
-      // Refresh entries
+      // Refresh entries, the list totals and the dialog header
       if (selectedTimesheet) {
         await fetchTimeEntries(selectedTimesheet);
+        await refreshSelectedTimesheet(selectedTimesheet.id);
       }
-
-      // Reopen the Time Entries dialog
-      setShowEntriesDialog(true);
+      return true;
     } catch (error) {
       toast.error(error.response?.data?.detail || t('approvals.messages.entryUpdateError'));
+      return false;
     } finally {
       setIsSavingEntry(false);
     }
   };
 
   const handleDeleteTimeEntry = async (entry) => {
+    setIsDeletingEntry(true);
     try {
-      setIsDeletingEntry(true);
       await axios.delete(`${API}/time-entries/${entry.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       toast.success('Time entry deleted');
 
-      // Refresh entries
+      // Refresh entries, the list totals and the dialog header
       if (selectedTimesheet) {
         await fetchTimeEntries(selectedTimesheet);
+        await refreshSelectedTimesheet(selectedTimesheet.id);
       }
-
-      // Reopen the Time Entries dialog
-      setShowEntriesDialog(true);
+      return true;
     } catch (error) {
       console.error('Failed to delete time entry:', error);
       toast.error('Failed to delete time entry');
+      return false;
     } finally {
       setIsDeletingEntry(false);
     }
@@ -627,7 +649,9 @@ export const AdminApprovalsPage = () => {
                           </span>
                         </td>
                         <td className="p-4 align-middle text-muted-foreground">
-                          {new Date(timesheet.submitted_at).toLocaleDateString()}
+                          {timesheet.submitted_at
+                            ? new Date(timesheet.submitted_at).toLocaleDateString()
+                            : '-'}
                         </td>
                         <td className="p-4 align-middle">
                           <div className="flex gap-2">
@@ -679,7 +703,13 @@ export const AdminApprovalsPage = () => {
       </Tabs>
 
       {/* Review Dialog */}
-      <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+      <Dialog
+        open={showReviewDialog}
+        onOpenChange={(open) => {
+          setShowReviewDialog(open);
+          if (!open) setReviewComment('');
+        }}
+      >
         <DialogContent data-testid="review-dialog">
           <DialogHeader>
             <DialogTitle>

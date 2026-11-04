@@ -229,9 +229,9 @@ const TimeLogModal = ({ isOpen, onClose, timeLog, onSave, onDelete, projects, al
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const durationMinutes = parseTimeToMinutes(duration);
-    onSave({
+    const ok = await onSave({
       ...timeLog,
       duration: durationMinutes,
       startTime,
@@ -240,13 +240,13 @@ const TimeLogModal = ({ isOpen, onClose, timeLog, onSave, onDelete, projects, al
       project_id: projectId,
       task_id: taskId
     });
-    onClose();
+    if (ok !== false) onClose();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm(t('detailedView.modal.deleteConfirm'))) {
-      onDelete(timeLog);
-      onClose();
+      const ok = await onDelete(timeLog);
+      if (ok !== false) onClose();
     }
   };
 
@@ -514,6 +514,7 @@ export const DetailedViewPage = () => {
           id: key,
           user_id: entry.user_id,
           project_id: entry.project_id || 'no-project',
+          project_ids: new Set(),
           date: entry.date,
           entries: [],
           total_duration: 0,
@@ -521,6 +522,7 @@ export const DetailedViewPage = () => {
         };
       }
 
+      grouped[key].project_ids.add(entry.project_id || 'no-project');
       grouped[key].entries.push(entry);
       grouped[key].total_duration += entry.duration || 0;
     });
@@ -572,7 +574,7 @@ export const DetailedViewPage = () => {
     try {
       if (!updatedLog.project_id) {
         toast.error(t('detailedView.messages.selectProject'));
-        return;
+        return false;
       }
 
       // FIXED: Create datetime strings that preserve the selected date in GERMAN timezone (Europe/Berlin)
@@ -607,14 +609,28 @@ export const DetailedViewPage = () => {
       }
 
       await fetchTimeEntries();
-      setShowTimeLogModal(false);
-      setEditingTimeLog(null);
+      return true;
     } catch (error) {
       console.error('Failed to save time log:', error);
       toast.error(t('detailedView.messages.saveError'));
+      return false;
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleEditTimeLog = (entry) => {
+    setEditingTimeLog({
+      id: entry.id,
+      date: formatDateISO(new Date(entry.date)),
+      duration: Math.floor((entry.duration || 0) / 60), // modal works in minutes
+      startTime: formatTime(new Date(entry.start_time)),
+      endTime: formatTime(new Date(entry.end_time)),
+      notes: entry.notes || '',
+      project_id: entry.project_id || '',
+      task_id: entry.task_id || ''
+    });
+    setShowTimeLogModal(true);
   };
 
   const handleDeleteTimeLog = async (log) => {
@@ -624,14 +640,14 @@ export const DetailedViewPage = () => {
         await axios.delete(`${API}/time-entries/${log.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        await fetchTimeEntries();
+        toast.success(t('detailedView.messages.logDeleted'));
       }
-      await fetchTimeEntries();
-      toast.success(t('detailedView.messages.logDeleted'));
-      setShowTimeLogModal(false);
-      setEditingTimeLog(null);
+      return true;
     } catch (error) {
       console.error('Failed to delete time log:', error);
       toast.error(t('detailedView.messages.deleteError'));
+      return false;
     } finally {
       setIsDeleting(false);
     }
@@ -933,7 +949,11 @@ export const DetailedViewPage = () => {
                       <td className="p-4">{getUserName(group.user_id)}</td>
 
                       {/* Project */}
-                      <td className="p-4">{getProjectName(group.project_id)}</td>
+                      <td className="p-4">
+                        {group.project_ids && group.project_ids.size > 1
+                          ? 'Multiple projects'
+                          : getProjectName(group.project_id)}
+                      </td>
 
                       {/* Total Hours */}
                       <td className="p-4 text-center font-medium">
@@ -964,7 +984,9 @@ export const DetailedViewPage = () => {
                               return (
                                 <div
                                   key={entry.id || index}
-                                  className="flex items-center justify-between p-3 bg-card border border-border rounded-lg shadow-sm"
+                                  className="flex items-center justify-between p-3 bg-card border border-border rounded-lg shadow-sm cursor-pointer hover:bg-muted/30 transition-colors"
+                                  onClick={() => handleEditTimeLog(entry)}
+                                  title="Click to edit this time log"
                                   data-testid={`entry-${entry.id}`}
                                 >
                                   <div className="flex-1">

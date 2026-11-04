@@ -694,20 +694,75 @@ export const TimeTrackerPage = () => {
     }
   };
 
+  // Move every saved entry of a row to a new project/task, then rebuild the grid
+  const moveRowEntries = async (rowId, nextProjectId, nextTaskId) => {
+    const normalizedTaskId = nextTaskId || '';
+    const newRowId = `${nextProjectId}_${normalizedTaskId}`;
+
+    // Nothing to move (empty row) or same assignment
+    if (!nextProjectId || newRowId === rowId) return;
+
+    const realLogs = Object.keys(timeLogs)
+      .filter(key => key.startsWith(`${rowId}_`))
+      .flatMap(key => (timeLogs[key] || []).filter(
+        log => log.id && !log.id.startsWith('new_log_') && !log.id.startsWith('log_')
+      ));
+
+    if (realLogs.length === 0) return;
+
+    setIsSavingEntry(rowId);
+    try {
+      for (const log of realLogs) {
+        const startDateTime = createDateAsBerlinTime(log.date, log.startTime);
+        const endDateTime = createDateAsBerlinTime(log.date, log.endTime);
+        // Handle overnight shifts (end time on next day)
+        if (endDateTime < startDateTime) {
+          endDateTime.setDate(endDateTime.getDate() + 1);
+        }
+
+        await axios.put(`${API}/time-entries/${log.id}`, {
+          project_id: nextProjectId,
+          task_id: normalizedTaskId || null,
+          start_time: startDateTime.toISOString(),
+          end_time: endDateTime.toISOString(),
+          notes: log.notes || ''
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+
+      await fetchTimeEntries();
+      toast.success('Time entries moved to the selected project');
+    } catch (error) {
+      console.error('Failed to move time entries:', error);
+      toast.error('Failed to move time entries');
+      // Re-sync so the grid does not keep a wrong local state
+      await fetchTimeEntries();
+    } finally {
+      setIsSavingEntry(null);
+    }
+  };
+
   const handleProjectChange = (rowId, projectId) => {
     setTimesheetRows(timesheetRows.map(row =>
       row.id === rowId
         ? { ...row, project_id: projectId, task_id: '' }
         : row
     ));
+    // Persist the change on existing entries instead of only updating local state
+    moveRowEntries(rowId, projectId, '');
   };
 
   const handleTaskChange = (rowId, taskId) => {
-    setTimesheetRows(timesheetRows.map(row =>
-      row.id === rowId
-        ? { ...row, task_id: taskId }
-        : row
+    const row = timesheetRows.find(r => r.id === rowId);
+    setTimesheetRows(timesheetRows.map(r =>
+      r.id === rowId
+        ? { ...r, task_id: taskId }
+        : r
     ));
+    if (row?.project_id) {
+      moveRowEntries(rowId, row.project_id, taskId);
+    }
   };
 
   const handleTimeChange = (rowId, date, value) => {
@@ -732,31 +787,68 @@ export const TimeTrackerPage = () => {
 
     const minutes = row.timeByDay[date] || 0;
 
-    // Skip if no time entered or no project selected
-    if (minutes === 0 || !row.project_id) return;
+    // Existing entries already saved for this cell (row + day)
+    const logKey = `${rowId}_${date}`;
+    const existingLogs = (timeLogs[logKey] || []).filter(
+      log => log.id && !log.id.startsWith('new_log_') && !log.id.startsWith('log_')
+    );
+    const existingMinutes = existingLogs.reduce((sum, log) => sum + (log.duration || 0), 0);
+
+    // Nothing actually changed (e.g. user only clicked the cell) -> don't touch the API
+    if (minutes === existingMinutes) return;
+
+    if (minutes > 0 && !row.project_id) {
+      toast.error('Please select a project first');
+      return;
+    }
 
     setIsSavingEntry(`${rowId}_${date}`);
     try {
-      // FIXED: Create time entry with proper timezone handling
-      // Use the date string directly with a fixed time to avoid timezone conversion issues
-      const startTime = createDateAsBerlinTime(date, '09:00');
+      // Clearing a cell removes its saved entries
+      if (minutes === 0) {
+        for (const log of existingLogs) {
+          await axios.delete(`${API}/time-entries/${log.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        }
+        await fetchTimeEntries();
+        toast.success('Time entry removed');
+        return;
+      }
+
+      // Keep the start time the user already had, fall back to 09:00
+      const startTime = createDateAsBerlinTime(date, existingLogs[0]?.startTime || '09:00');
       const endTime = new Date(startTime.getTime() + minutes * 60000);
 
-      await axios.post(`${API}/time-entries/manual`, {
+      const payload = {
         project_id: row.project_id || null,
         task_id: row.task_id || null,
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
         duration: minutes * 60,
         notes: `Timesheet entry for ${date}`
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      };
 
-      // Refresh data to get the new entry
-      await fetchTimeEntries();
-
-      toast.success('Time entry saved');
+      if (existingLogs.length > 0) {
+        // UPDATE the existing entry instead of adding a new one
+        await axios.put(`${API}/time-entries/${existingLogs[0].id}`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        // Collapse duplicate entries that may already exist for this cell
+        for (const extra of existingLogs.slice(1)) {
+          await axios.delete(`${API}/time-entries/${extra.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        }
+        await fetchTimeEntries();
+        toast.success('Time entry updated');
+      } else {
+        await axios.post(`${API}/time-entries/manual`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        await fetchTimeEntries();
+        toast.success('Time entry saved');
+      }
     } catch (error) {
       console.error('Failed to save time entry:', error);
       toast.error('Failed to save time entry');

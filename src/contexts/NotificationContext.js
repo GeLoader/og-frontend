@@ -18,7 +18,7 @@ export const NotificationProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
 
   const fetchNotifications = useCallback(async () => {
     if (!user || !token) return;
@@ -46,8 +46,20 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [user, token, API_URL]);
 
+  // Never show a previous user's notifications after a logout/user switch
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  }, [user]);
+
   const markAsRead = async (notificationId) => {
     if (!token) return;
+
+    // Already read -> nothing to do (prevents the badge from drifting downwards)
+    const target = notifications.find(n => n.id === notificationId);
+    if (target?.read) return;
 
     try {
       await axios.put(
@@ -55,12 +67,13 @@ export const NotificationProvider = ({ children }) => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       // Update local state
       setNotifications(prev =>
         prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
       );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      // Re-sync with the server instead of guessing
+      await fetchUnreadCount();
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }

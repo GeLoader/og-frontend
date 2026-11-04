@@ -18,10 +18,15 @@ export const TimerProvider = ({ children }) => {
   // Use ref to store the start time to avoid dependency issues
   const startTimeRef = useRef(null);
 
-  // Load active timer on mount
+  // Load active timer on mount, and reset everything when the session ends
   useEffect(() => {
     if (user && token) {
       checkActiveTimer();
+    } else {
+      setActiveTimer(null);
+      setIsRunning(false);
+      setElapsed(0);
+      startTimeRef.current = null;
     }
   }, [user, token]);
 
@@ -76,6 +81,12 @@ export const TimerProvider = ({ children }) => {
         const start = new Date(response.data.start_time).getTime();
         const now = Date.now();
         setElapsed(Math.floor((now - start) / 1000));
+      } else {
+        // Server says there is no running timer -> clear any stale local state
+        setActiveTimer(null);
+        setIsRunning(false);
+        setElapsed(0);
+        startTimeRef.current = null;
       }
     } catch (error) {
       console.error('Failed to check active timer:', error);
@@ -127,6 +138,15 @@ export const TimerProvider = ({ children }) => {
 
       return { success: true };
     } catch (error) {
+      // The timer no longer exists on the server -> stop the zombie local timer
+      if (error.response?.status === 404) {
+        setActiveTimer(null);
+        setIsRunning(false);
+        setElapsed(0);
+        startTimeRef.current = null;
+        toast.error('No active timer found on the server');
+        return { success: false };
+      }
       toast.error(error.response?.data?.detail || 'Failed to stop timer');
       return { success: false };
     }

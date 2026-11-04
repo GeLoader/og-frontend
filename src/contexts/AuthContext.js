@@ -26,8 +26,14 @@ export const AuthProvider = ({ children }) => {
       });
       setUser(response.data);
     } catch (error) {
-      console.error('Failed to fetch user:', error);
-      logout();
+      const status = error.response?.status;
+      if (status === 401 || status === 403) {
+        // Token invalid/expired or account disabled -> real logout
+        logout();
+      } else {
+        // Network/server hiccup: keep the session, do not kick the user out
+        console.error('Failed to fetch user (temporary error):', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -37,6 +43,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post(`${API}/auth/login`, { email, password });
       const { token: newToken, user: userData } = response.data;
+      if (userData?.status === 'inactive') {
+        return { success: false, error: 'Account is inactive' };
+      }
       localStorage.setItem('token', newToken);
       setToken(newToken);
       setUser(userData);

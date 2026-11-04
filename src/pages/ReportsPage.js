@@ -233,10 +233,10 @@ export const ReportsPage = () => {
             <table className="w-full text-sm text-left" data-testid="report-results-table">
               <thead className="bg-muted/50 text-muted-foreground font-medium">
                 <tr>
-                  {filters.group_by === 'user' && <th className="p-4 align-middle">{t('reports.employee')}</th>}
-                  {filters.group_by === 'project' && <th className="p-4 align-middle">{t('reports.project')}</th>}
-                  {filters.group_by === 'task' && <th className="p-4 align-middle">{t('reports.task')}</th>}
-                  {filters.group_by === 'date' && <th className="p-4 align-middle">{t('reports.date')}</th>}
+                  {(reportData?.filters?.group_by || filters.group_by) === 'user' && <th className="p-4 align-middle">{t('reports.employee')}</th>}
+                  {(reportData?.filters?.group_by || filters.group_by) === 'project' && <th className="p-4 align-middle">{t('reports.project')}</th>}
+                  {(reportData?.filters?.group_by || filters.group_by) === 'task' && <th className="p-4 align-middle">{t('reports.task')}</th>}
+                  {(reportData?.filters?.group_by || filters.group_by) === 'date' && <th className="p-4 align-middle">{t('reports.date')}</th>}
                   <th className="p-4 align-middle">{t('reports.totalHours')}</th>
                   <th className="p-4 align-middle">{t('reports.entryCount')}</th>
                 </tr>
@@ -244,7 +244,11 @@ export const ReportsPage = () => {
               <tbody>
                 {reportData.data.map((item, index) => (
                   <tr key={item.id || index} className="border-b border-border hover:bg-muted/20 transition-colors">
-                    <td className="p-4 align-middle font-medium">{new Date(item.label).toLocaleDateString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'})}</td>
+                    <td className="p-4 align-middle font-medium">
+                      {(reportData?.filters?.group_by || filters.group_by) === 'date'
+                        ? new Date(item.label).toLocaleDateString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+                        : (item.label ?? '—')}
+                    </td>
                     <td className="p-4 align-middle">{item.total_hours}h</td>
                     <td className="p-4 align-middle text-muted-foreground">{item.entry_count}</td>
                   </tr>
