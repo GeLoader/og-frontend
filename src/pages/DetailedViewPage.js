@@ -762,6 +762,13 @@ export const DetailedViewPage = () => {
 
   return (
     <div className="space-y-6" data-testid="detailed-view-page">
+      {/* Header */}
+      <div>
+        <h1 className="text-4xl font-bold tracking-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+          {t('detailedView.title')}
+        </h1>
+      </div>
+
       {/* Controls Row */}
       <div className="flex flex-wrap items-center gap-4">
         {/* Week Navigation */}
