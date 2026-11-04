@@ -128,7 +128,7 @@ export const StickyTimerWidget = () => {
         <DialogTrigger asChild>
           <button
             data-testid="floating-timer-start-btn"
-            className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 flex items-center justify-center transition-all hover:scale-110"
+            className="fixed bottom-6 left-6 right-6 z-50 h-16 w-full max-w-[90vw] rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 flex items-center justify-center transition-all hover:scale-105 sm:left-auto sm:right-6 sm:w-auto sm:max-w-none sm:h-16 sm:w-16"
           >
             <Play className="h-6 w-6" />
           </button>
@@ -197,9 +197,10 @@ export const StickyTimerWidget = () => {
     return (
       <div
         data-testid="active-timer-widget"
-        className="fixed bottom-6 right-6 z-50 bg-background/95 dark:bg-card/95 border border-border shadow-xl rounded-xl backdrop-blur-md transition-all duration-300 supports-[backdrop-filter]:bg-background/60"
+        className="fixed bottom-6 left-6 right-6 z-50 bg-background/95 dark:bg-card/95 border border-border shadow-xl rounded-xl backdrop-blur-md transition-all duration-300 supports-[backdrop-filter]:bg-background/60 sm:left-auto sm:right-6 sm:w-auto"
         style={{
-          minWidth: isExpanded ? '280px' : '160px'
+          minWidth: isExpanded ? '240px' : '140px',
+          maxWidth: '90vw'
         }}
       >
         {/* Header with timer and expand toggle */}

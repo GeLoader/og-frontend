@@ -226,7 +226,7 @@ const TimeLogModal = ({ isOpen, onClose, timeEntry, onSave, onDelete, projects, 
           </div>
 
           {/* Start Time & End Time */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Start time</label>
               <Input
@@ -584,7 +584,7 @@ export const AdminApprovalsPage = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4" data-testid="approvals-tabs">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" data-testid="approvals-tabs">
           <TabsTrigger value="approvals" data-testid="approvals-tab">
             {t('approvals.tabs.approvals')}
             {activeTab === 'approvals' && timesheets.length > 0 && (

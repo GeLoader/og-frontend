@@ -196,7 +196,7 @@ export const TimesheetsPage = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4" data-testid="timesheets-tabs">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" data-testid="timesheets-tabs">
           <TabsTrigger value="open" data-testid="open-tab">
             {t('timesheets.open')}
           </TabsTrigger>
@@ -333,7 +333,7 @@ export const TimesheetsPage = () => {
           <div className="pt-4">
             {selectedTimesheet && (
               <div className="mb-4 bg-muted/50 rounded-lg p-4">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <div className="text-sm text-muted-foreground">{t('timesheets.payPeriod')}</div>
                     <div className="font-medium">

@@ -476,7 +476,7 @@ export const ReportTimeSheetPage = () => {
         <div className="bg-card rounded-lg border border-border p-4 mb-6 shadow-sm">
           <div className="flex items-center gap-4 flex-wrap">
             <Select value={dateFilter} onValueChange={handleDateFilterChange}>
-              <SelectTrigger className="w-[150px] bg-background border-input">
+              <SelectTrigger className="w-full sm:w-[150px] bg-background border-input">
                 <SelectValue placeholder={t('reportTimeSheet.dateRanges.thisWeek')} />
               </SelectTrigger>
               <SelectContent>
@@ -525,7 +525,7 @@ export const ReportTimeSheetPage = () => {
                     type="date"
                     value={customStartDate}
                     onChange={(e) => setCustomStartDate(e.target.value)}
-                    className="w-[180px] bg-background border-input"
+                    className="w-full sm:w-[180px] bg-background border-input"
                     placeholder={t('reportTimeSheet.customDate.startDate')}
                   />
                   <span className="text-muted-foreground">→</span>
@@ -533,7 +533,7 @@ export const ReportTimeSheetPage = () => {
                     type="date"
                     value={customEndDate}
                     onChange={(e) => setCustomEndDate(e.target.value)}
-                    className="w-[180px] bg-background border-input"
+                    className="w-full sm:w-[180px] bg-background border-input"
                     placeholder={t('reportTimeSheet.customDate.endDate')}
                   />
                 </div>
@@ -570,7 +570,7 @@ export const ReportTimeSheetPage = () => {
             {/* Users Filter - Only show for Admin */}
             {isAdmin && (
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                <SelectTrigger className="w-[150px] bg-background border-input" data-testid="users-filter">
+                <SelectTrigger className="w-full sm:w-[150px] bg-background border-input" data-testid="users-filter">
                   <UsersIcon className="w-4 h-4 mr-2" />
                   <SelectValue placeholder={t('reportTimeSheet.filters.users')} />
                 </SelectTrigger>
@@ -587,7 +587,7 @@ export const ReportTimeSheetPage = () => {
 
             {/* Projects Filter */}
             <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-              <SelectTrigger className="w-[150px] bg-background border-input" data-testid="projects-filter">
+              <SelectTrigger className="w-full sm:w-[150px] bg-background border-input" data-testid="projects-filter">
                 <Briefcase className="w-4 h-4 mr-2" />
                 <SelectValue placeholder={t('reportTimeSheet.filters.projects')} />
               </SelectTrigger>
@@ -603,7 +603,7 @@ export const ReportTimeSheetPage = () => {
 
             {/* Tasks Filter */}
             <Select value={selectedTaskId} onValueChange={setSelectedTaskId}>
-              <SelectTrigger className="w-[150px] bg-background border-input" data-testid="tasks-filter">
+              <SelectTrigger className="w-full sm:w-[150px] bg-background border-input" data-testid="tasks-filter">
                 <Check className="w-4 h-4 mr-2" />
                 <SelectValue placeholder={t('reportTimeSheet.filters.tasks')} />
               </SelectTrigger>

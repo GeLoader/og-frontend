@@ -797,7 +797,7 @@ export const DetailedViewPage = () => {
         {/* Sum By Dropdown */}
         <div className="flex items-center gap-2 border border-border rounded-lg px-4 py-2 bg-card">
           <Select value={sumBy} onValueChange={setSumBy}>
-            <SelectTrigger className="w-[150px]" data-testid="sum-by-filter">
+            <SelectTrigger className="w-full sm:w-[150px]" data-testid="sum-by-filter">
               <SelectValue placeholder={t('detailedView.sumBy')} />
             </SelectTrigger>
             <SelectContent>
@@ -842,7 +842,7 @@ export const DetailedViewPage = () => {
         {isAdmin && (
           <div className="flex items-center gap-2 border border-border rounded-lg px-4 py-2 bg-card">
             <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-              <SelectTrigger className="w-[180px]" data-testid="users-filter">
+              <SelectTrigger className="w-full sm:w-[180px]" data-testid="users-filter">
                 <SelectValue placeholder={t('detailedView.users')} />
               </SelectTrigger>
               <SelectContent>
@@ -860,7 +860,7 @@ export const DetailedViewPage = () => {
         {/* Projects Filter */}
         <div className="flex items-center gap-2 border border-border rounded-lg px-4 py-2 bg-card">
           <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-            <SelectTrigger className="w-[180px]" data-testid="projects-filter">
+            <SelectTrigger className="w-full sm:w-[180px]" data-testid="projects-filter">
               <SelectValue placeholder={t('detailedView.projects')} />
             </SelectTrigger>
             <SelectContent>
@@ -877,7 +877,7 @@ export const DetailedViewPage = () => {
         {/* Status Filter */}
         <div className="flex items-center gap-2 border border-border rounded-lg px-4 py-2 bg-card">
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="w-[180px]" data-testid="status-filter">
+            <SelectTrigger className="w-full sm:w-[180px]" data-testid="status-filter">
               <SelectValue placeholder={t('detailedView.allStatus')} />
             </SelectTrigger>
             <SelectContent>

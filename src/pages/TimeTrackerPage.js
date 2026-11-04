@@ -341,7 +341,7 @@ const TimeLogModal = ({ isOpen, onClose, timeLog, onSave, onDelete, projects, al
           </div>
 
           {/* Start Time & End Time */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start time</label>
               <Input
@@ -1083,7 +1083,7 @@ export const TimeTrackerPage = () => {
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium min-w-[200px] text-center">
+            <span className="text-sm font-medium min-w-[140px] sm:min-w-[200px] text-center">
               {weekRangeText}
             </span>
             <Button
@@ -1113,7 +1113,7 @@ export const TimeTrackerPage = () => {
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium min-w-[200px] text-center">
+            <span className="text-sm font-medium min-w-[140px] sm:min-w-[200px] text-center">
               {formatDayHeader(selectedDate)} (Today)
             </span>
             <Button
@@ -1143,7 +1143,7 @@ export const TimeTrackerPage = () => {
               value={selectedUserId}
               onValueChange={setSelectedUserId}
             >
-              <SelectTrigger className="w-[200px]" data-testid="user-selector">
+              <SelectTrigger className="w-full sm:w-[200px]" data-testid="user-selector">
                 <SelectValue placeholder="Select user" />
               </SelectTrigger>
               <SelectContent>
@@ -1189,18 +1189,18 @@ export const TimeTrackerPage = () => {
               <table className="w-full text-sm" data-testid="timesheet-table">
                 <thead className="bg-muted/50 text-muted-foreground">
                   <tr>
-                    <th className="p-4 text-left font-medium w-[50px]"></th>
-                    <th className="p-4 text-left font-medium min-w-[200px]">
+                    <th className="p-4 text-left font-medium w-[40px] sm:w-[50px]"></th>
+                    <th className="p-4 text-left font-medium min-w-[140px] sm:min-w-[200px]">
                       PROJECT <span className="text-red-500">*</span>
                     </th>
-                    <th className="p-4 text-left font-medium min-w-[200px]">TASK</th>
+                    <th className="p-4 text-left font-medium min-w-[140px] sm:min-w-[200px]">TASK</th>
                     {weekDays.map((day) => (
-                      <th key={day.toISOString()} className="p-4 text-center font-medium min-w-[100px]">
+                      <th key={day.toISOString()} className="p-4 text-center font-medium min-w-[80px] sm:min-w-[100px]">
                         {formatDayHeader(day)}
                       </th>
                     ))}
-                    <th className="p-4 text-center font-medium min-w-[100px]">Total</th>
-                    <th className="p-4 text-center font-medium w-[50px]"></th>
+                    <th className="p-4 text-center font-medium min-w-[80px] sm:min-w-[100px]">Total</th>
+                    <th className="p-4 text-center font-medium w-[40px] sm:w-[50px]"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1369,7 +1369,7 @@ export const TimeTrackerPage = () => {
                                       </div>
 
                                       {logs.length > 0 ? (
-                                        <div className="grid grid-cols-7 gap-2">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2">
                                           {logs.map((log) => (
                                             <div
                                               key={log.id}
