@@ -571,38 +571,46 @@ export const AdminApprovalsPage = () => {
   };
 
   return (
-    <div className="space-y-6" data-testid="admin-approvals-page">
+    <div className="space-y-4 sm:space-y-6" data-testid="admin-approvals-page">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold tracking-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
           {t('approvals.title')}
         </h1>
-        <p className="text-base text-muted-foreground leading-relaxed mt-2">
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed sm:text-base">
           {t('approvals.subtitle')}
         </p>
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" data-testid="approvals-tabs">
-          <TabsTrigger value="approvals" data-testid="approvals-tab">
-            {t('approvals.tabs.approvals')}
-            {activeTab === 'approvals' && timesheets.length > 0 && (
-              <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
-                {timesheets.length}
-              </span>
-            )}
+        <TabsList className="grid w-full grid-cols-2 gap-1 h-auto sm:grid-cols-4" data-testid="approvals-tabs">
+          <TabsTrigger value="approvals" data-testid="approvals-tab" className="min-w-0 w-full min-h-10 whitespace-nowrap text-xs sm:text-sm">
+            <span className="inline-flex items-center gap-1">
+              {t('approvals.tabs.approvals')}
+              {activeTab === 'approvals' && timesheets.length > 0 && (
+                <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold leading-none text-white">
+                  {timesheets.length}
+                </span>
+              )}
+            </span>
           </TabsTrigger>
-          <TabsTrigger value="approved" data-testid="approved-tab">{t('approvals.tabs.approved')}</TabsTrigger>
-          <TabsTrigger value="denied" data-testid="denied-tab">{t('approvals.tabs.denied')}</TabsTrigger>
-          <TabsTrigger value="all" data-testid="all-tab">{t('approvals.tabs.all')}</TabsTrigger>
+          <TabsTrigger value="approved" data-testid="approved-tab" className="min-w-0 w-full min-h-10 whitespace-nowrap text-xs sm:text-sm">
+            {t('approvals.tabs.approved')}
+          </TabsTrigger>
+          <TabsTrigger value="denied" data-testid="denied-tab" className="min-w-0 w-full min-h-10 whitespace-nowrap text-xs sm:text-sm">
+            {t('approvals.tabs.denied')}
+          </TabsTrigger>
+          <TabsTrigger value="all" data-testid="all-tab" className="min-w-0 w-full min-h-10 whitespace-nowrap text-xs sm:text-sm">
+            {t('approvals.tabs.all')}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-6">
-          {/* Timesheets Table */}
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
+          {/* Desktop/Tablet Table */}
+          <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-card">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left" data-testid="timesheets-table">
+              <table className="w-full min-w-[720px] text-sm text-left" data-testid="timesheets-table">
                 <thead className="bg-muted/50 text-muted-foreground font-medium">
                   <tr>
                     <th className="p-4 align-middle">{t('approvals.table.employee')}</th>
@@ -631,13 +639,9 @@ export const AdminApprovalsPage = () => {
                   ) : (
                     timesheets.map((timesheet) => (
                       <tr key={timesheet.id} className="border-b border-border hover:bg-muted/20 transition-colors">
-                        <td className="p-4 align-middle font-medium">
-                          {getUserName(timesheet.user_id)}
-                        </td>
-                        <td className="p-4 align-middle">
-                          {formatPayPeriod(timesheet.week_start, timesheet.week_end)}
-                        </td>
-                        <td className="p-4 align-middle font-medium">{formatTotalHours(timesheet.total_hours)}</td>
+                        <td className="p-4 align-middle font-medium min-w-0">{getUserName(timesheet.user_id)}</td>
+                        <td className="p-4 align-middle min-w-0">{formatPayPeriod(timesheet.week_start, timesheet.week_end)}</td>
+                        <td className="p-4 align-middle font-medium whitespace-nowrap">{formatTotalHours(timesheet.total_hours)}</td>
                         <td className="p-4 align-middle">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${timesheet.status === 'approved'
                             ? 'bg-green-100 text-green-800'
@@ -648,19 +652,20 @@ export const AdminApprovalsPage = () => {
                             {timesheet.status}
                           </span>
                         </td>
-                        <td className="p-4 align-middle text-muted-foreground">
+                        <td className="p-4 align-middle text-muted-foreground whitespace-nowrap">
                           {timesheet.submitted_at
                             ? new Date(timesheet.submitted_at).toLocaleDateString()
                             : '-'}
                         </td>
                         <td className="p-4 align-middle">
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-2">
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => handleViewEntries(timesheet)}
                               disabled={loadingViewEntries === timesheet.id}
                               data-testid={`view-entries-${timesheet.id}`}
+                              className="h-8"
                             >
                               {loadingViewEntries === timesheet.id ? (
                                 <Loader2 className="h-4 w-4 mr-1 animate-spin" />
@@ -675,6 +680,7 @@ export const AdminApprovalsPage = () => {
                                   size="sm"
                                   onClick={() => openReviewDialog(timesheet, 'approved')}
                                   data-testid={`approve-timesheet-${timesheet.id}`}
+                                  className="h-8"
                                 >
                                   <Check className="h-4 w-4 mr-1" />
                                   {t('approvals.buttons.approve')}
@@ -684,6 +690,7 @@ export const AdminApprovalsPage = () => {
                                   variant="destructive"
                                   onClick={() => openReviewDialog(timesheet, 'denied')}
                                   data-testid={`deny-timesheet-${timesheet.id}`}
+                                  className="h-8"
                                 >
                                   <X className="h-4 w-4 mr-1" />
                                   {t('approvals.buttons.deny')}
@@ -698,6 +705,96 @@ export const AdminApprovalsPage = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-3" data-testid="timesheets-cards">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              </div>
+            ) : timesheets.length === 0 ? (
+              <div className="rounded-xl border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
+                {t('approvals.messages.noTimesheets')}
+              </div>
+            ) : (
+              timesheets.map((timesheet) => (
+                <div key={timesheet.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground truncate">{getUserName(timesheet.user_id)}</p>
+                      <p className="text-sm text-muted-foreground break-words">
+                        {formatPayPeriod(timesheet.week_start, timesheet.week_end)}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${timesheet.status === 'approved'
+                      ? 'bg-green-100 text-green-800'
+                      : timesheet.status === 'denied'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                      {timesheet.status}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="min-w-0">
+                      <div className="text-muted-foreground">{t('approvals.table.totalHours')}</div>
+                      <div className="font-medium whitespace-nowrap">{formatTotalHours(timesheet.total_hours)}</div>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-muted-foreground">{t('approvals.table.submitted')}</div>
+                      <div className="font-medium whitespace-nowrap">
+                        {timesheet.submitted_at
+                          ? new Date(timesheet.submitted_at).toLocaleDateString()
+                          : '-'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 border-t border-border pt-3">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleViewEntries(timesheet)}
+                      disabled={loadingViewEntries === timesheet.id}
+                      data-testid={`view-entries-${timesheet.id}`}
+                      className="h-8"
+                    >
+                      {loadingViewEntries === timesheet.id ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Eye className="h-4 w-4 mr-1" />
+                      )}
+                      {t('approvals.buttons.viewEntries')}
+                    </Button>
+                    {timesheet.status === 'submitted' && (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => openReviewDialog(timesheet, 'approved')}
+                          data-testid={`approve-timesheet-${timesheet.id}`}
+                          className="h-8"
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          {t('approvals.buttons.approve')}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => openReviewDialog(timesheet, 'denied')}
+                          data-testid={`deny-timesheet-${timesheet.id}`}
+                          className="h-8"
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          {t('approvals.buttons.deny')}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </TabsContent>
       </Tabs>
@@ -774,14 +871,14 @@ export const AdminApprovalsPage = () => {
 
       {/* View Time Entries Dialog */}
       <Dialog open={showEntriesDialog} onOpenChange={setShowEntriesDialog}>
-        <DialogContent className="max-w-4xl" data-testid="entries-dialog">
+        <DialogContent className="w-full max-w-4xl" data-testid="entries-dialog">
           <DialogHeader>
             <DialogTitle>{t('approvals.dialog.entriesTitle')}</DialogTitle>
           </DialogHeader>
           <div className="pt-4">
             {selectedTimesheet && (
               <div className="mb-4 bg-muted/50 rounded-lg p-4">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <div>
                     <div className="text-sm text-muted-foreground">{t('approvals.table.employee')}</div>
                     <div className="font-medium">{getUserName(selectedTimesheet.user_id)}</div>
@@ -800,8 +897,8 @@ export const AdminApprovalsPage = () => {
               </div>
             )}
 
-            <div className="border rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
+            <div className="rounded-lg border overflow-x-auto">
+              <table className="w-full min-w-[640px] text-sm">
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="p-3 text-left">{t('approvals.dialog.date')}</th>

@@ -761,27 +761,25 @@ export const DetailedViewPage = () => {
   const weekRangeText = t('detailedView.weekRange', { range: formatDateRange(currentWeekStart) });
 
   return (
-    <div className="space-y-6" data-testid="detailed-view-page">
+    <div className="space-y-4 sm:space-y-6" data-testid="detailed-view-page">
       {/* Header */}
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
           {t('detailedView.title')}
         </h1>
-      </div>
 
-      {/* Controls Row */}
-      <div className="flex flex-wrap items-center gap-4">
         {/* Week Navigation */}
-        <div className="flex items-center gap-2 border border-border rounded-lg px-4 py-2 bg-card">
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-2 py-1.5 sm:px-4 sm:py-2 sm:w-auto">
           <Button
             variant="ghost"
             size="sm"
             onClick={handlePreviousWeek}
             data-testid="prev-week-btn"
+            className="h-9 w-9 p-0"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm font-medium min-w-[200px] text-center">
+          <span className="min-w-0 flex-1 text-center text-xs font-medium sm:text-sm">
             {weekRangeText}
           </span>
           <Button
@@ -789,15 +787,18 @@ export const DetailedViewPage = () => {
             size="sm"
             onClick={handleNextWeek}
             data-testid="next-week-btn"
+            className="h-9 w-9 p-0"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
+      </div>
 
-        {/* Sum By Dropdown */}
-        <div className="flex items-center gap-2 border border-border rounded-lg px-4 py-2 bg-card">
+      {/* Action Toolbar */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center">
+        <div className="flex items-center rounded-lg border border-border bg-card px-3 py-2 sm:px-4">
           <Select value={sumBy} onValueChange={setSumBy}>
-            <SelectTrigger className="w-full sm:w-[150px]" data-testid="sum-by-filter">
+            <SelectTrigger className="h-9 w-full sm:w-[180px]" data-testid="sum-by-filter">
               <SelectValue placeholder={t('detailedView.sumBy')} />
             </SelectTrigger>
             <SelectContent>
@@ -809,21 +810,19 @@ export const DetailedViewPage = () => {
           </Select>
         </div>
 
-        {/* Add Time Log Button */}
-        <Button onClick={handleAddTimeLog} data-testid="add-time-log-btn">
+        <Button onClick={handleAddTimeLog} data-testid="add-time-log-btn" className="h-9 w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           {t('detailedView.addTimeLog')}
         </Button>
 
-        {/* Download Button */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" data-testid="download-btn">
+            <Button variant="outline" data-testid="download-btn" className="h-9 w-full sm:w-auto">
               <Download className="h-4 w-4 mr-2" />
               Download
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent>
+          <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={handleExportPDF}>
               {t('detailedView.downloadPdf')}
             </DropdownMenuItem>
@@ -835,14 +834,12 @@ export const DetailedViewPage = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
-        <span className="text-sm font-medium">{t('detailedView.filters')}</span>
-
-        {/* Users Filter (Admin Only) */}
-        {isAdmin && (
-          <div className="flex items-center gap-2 border border-border rounded-lg px-4 py-2 bg-card">
+      <div className="space-y-3">
+        <span className="text-sm font-medium text-muted-foreground">{t('detailedView.filters')}</span>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {isAdmin && (
             <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-              <SelectTrigger className="w-full sm:w-[180px]" data-testid="users-filter">
+              <SelectTrigger className="h-9 w-full" data-testid="users-filter">
                 <SelectValue placeholder={t('detailedView.users')} />
               </SelectTrigger>
               <SelectContent>
@@ -854,13 +851,10 @@ export const DetailedViewPage = () => {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        )}
+          )}
 
-        {/* Projects Filter */}
-        <div className="flex items-center gap-2 border border-border rounded-lg px-4 py-2 bg-card">
           <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-            <SelectTrigger className="w-full sm:w-[180px]" data-testid="projects-filter">
+            <SelectTrigger className="h-9 w-full" data-testid="projects-filter">
               <SelectValue placeholder={t('detailedView.projects')} />
             </SelectTrigger>
             <SelectContent>
@@ -872,12 +866,9 @@ export const DetailedViewPage = () => {
               ))}
             </SelectContent>
           </Select>
-        </div>
 
-        {/* Status Filter */}
-        <div className="flex items-center gap-2 border border-border rounded-lg px-4 py-2 bg-card">
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="w-full sm:w-[180px]" data-testid="status-filter">
+            <SelectTrigger className="h-9 w-full" data-testid="status-filter">
               <SelectValue placeholder={t('detailedView.allStatus')} />
             </SelectTrigger>
             <SelectContent>
@@ -891,28 +882,29 @@ export const DetailedViewPage = () => {
         </div>
       </div>
 
-      {/* Total Hours Display */}
-      <div className="text-lg font-semibold">
-        {t('detailedView.totals', { hours: formatTimeDisplay(timeEntries.reduce((sum, entry) => sum + (entry.duration || 0), 0)) })}
+      {/* Total Hours Summary */}
+      <div className="rounded-lg border border-border bg-card px-4 py-3">
+        <p className="whitespace-nowrap text-sm font-semibold sm:text-base">
+          {t('detailedView.totals', { hours: formatTimeDisplay(timeEntries.reduce((sum, entry) => sum + (entry.duration || 0), 0)) })}
+        </p>
       </div>
 
-      {/* Table */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      {/* Desktop/Tablet Table */}
+      <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-card">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm" data-testid="detailed-view-table">
+          <table className="w-full min-w-[640px] text-sm" data-testid="detailed-view-table">
             <thead className="bg-muted/50 text-muted-foreground">
               <tr>
-                <th className="p-4 text-left font-medium w-[50px]"></th>
-                <th className="p-4 text-left font-medium min-w-[150px]">{t('detailedView.table.user')}</th>
-                <th className="p-4 text-left font-medium min-w-[200px]">{t('detailedView.table.project')}</th>
-                <th className="p-4 text-center font-medium min-w-[150px]">{t('detailedView.table.totalHours')}</th>
-                {/* <th className="p-4 text-center font-medium min-w-[150px]">{t('detailedView.table.approvalStatus')}</th> */}
+                <th className="p-4 text-left font-medium w-12"></th>
+                <th className="p-4 text-left font-medium min-w-[140px]">{t('detailedView.table.user')}</th>
+                <th className="p-4 text-left font-medium min-w-[180px]">{t('detailedView.table.project')}</th>
+                <th className="p-4 text-center font-medium min-w-[120px]">{t('detailedView.table.totalHours')}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={4} className="p-8 text-center text-muted-foreground">
                     <div className="flex justify-center items-center">
                       <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                     </div>
@@ -920,22 +912,21 @@ export const DetailedViewPage = () => {
                 </tr>
               ) : groupedData.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={4} className="p-8 text-center text-muted-foreground">
                     {t('detailedView.table.noEntries')}
                   </td>
                 </tr>
               ) : (
                 groupedData.map((group) => (
                   <React.Fragment key={group.id}>
-                    {/* Main Row */}
                     <tr className="border-b border-border hover:bg-muted/20 transition-colors">
-                      {/* Expand/Collapse Button */}
                       <td className="p-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => toggleRowExpansion(group.id)}
                           data-testid={`expand-row-${group.id}`}
+                          className="h-8 w-8 p-0"
                         >
                           {expandedRows.has(group.id) ? (
                             <ChevronDown className="h-4 w-4" />
@@ -945,31 +936,22 @@ export const DetailedViewPage = () => {
                         </Button>
                       </td>
 
-                      {/* User */}
-                      <td className="p-4">{getUserName(group.user_id)}</td>
+                      <td className="p-4 min-w-0">{getUserName(group.user_id)}</td>
 
-                      {/* Project */}
-                      <td className="p-4">
+                      <td className="p-4 min-w-0">
                         {group.project_ids && group.project_ids.size > 1
                           ? 'Multiple projects'
                           : getProjectName(group.project_id)}
                       </td>
 
-                      {/* Total Hours */}
-                      <td className="p-4 text-center font-medium">
+                      <td className="p-4 text-center font-medium whitespace-nowrap">
                         {formatTimeDisplay(group.total_duration)}
                       </td>
-
-                      {/* Approval Status - Linked from Timesheets */}
-                      {/* <td className="p-4 text-center">
-                        {getStatusBadge(group.approval_status)}
-                      </td> */}
                     </tr>
 
-                    {/* Expanded Row Content */}
                     {expandedRows.has(group.id) && (
                       <tr className="bg-muted/10">
-                        <td colSpan={5} className="p-4">
+                        <td colSpan={4} className="p-4">
                           <div className="space-y-2">
                             <h4 className="font-semibold text-sm mb-3 text-foreground">{t('detailedView.table.dailyBreakdown')}</h4>
                             {group.entries.map((entry, index) => {
@@ -984,17 +966,15 @@ export const DetailedViewPage = () => {
                               return (
                                 <div
                                   key={entry.id || index}
-                                  className="flex items-center justify-between p-3 bg-card border border-border rounded-lg shadow-sm cursor-pointer hover:bg-muted/30 transition-colors"
+                                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 shadow-sm cursor-pointer hover:bg-muted/30 transition-colors"
                                   onClick={() => handleEditTimeLog(entry)}
                                   title="Click to edit this time log"
                                   data-testid={`entry-${entry.id}`}
                                 >
-                                  <div className="flex-1">
-                                    <span className="text-sm font-medium text-foreground">{dateStr}</span>
-                                  </div>
-                                  <div className="text-sm text-muted-foreground font-mono">
+                                  <span className="min-w-0 text-sm font-medium text-foreground">{dateStr}</span>
+                                  <span className="whitespace-nowrap text-sm text-muted-foreground font-mono">
                                     {formatTimeDisplay(entry.duration)}
-                                  </div>
+                                  </span>
                                 </div>
                               );
                             })}
@@ -1008,6 +988,82 @@ export const DetailedViewPage = () => {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-3" data-testid="detailed-view-cards">
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          </div>
+        ) : groupedData.length === 0 ? (
+          <div className="rounded-xl border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
+            {t('detailedView.table.noEntries')}
+          </div>
+        ) : (
+          groupedData.map((group) => (
+            <div key={group.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-foreground truncate">{getUserName(group.user_id)}</p>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {group.project_ids && group.project_ids.size > 1
+                      ? 'Multiple projects'
+                      : getProjectName(group.project_id)}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="whitespace-nowrap font-mono text-sm font-semibold">
+                    {formatTimeDisplay(group.total_duration)}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleRowExpansion(group.id)}
+                    data-testid={`expand-row-${group.id}`}
+                    className="h-8 w-8 p-0"
+                  >
+                    {expandedRows.has(group.id) ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRightIcon className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {expandedRows.has(group.id) && (
+                <div className="space-y-2 border-t border-border pt-3">
+                  <h4 className="font-semibold text-sm text-foreground">{t('detailedView.table.dailyBreakdown')}</h4>
+                  {group.entries.map((entry, index) => {
+                    const entryDate = new Date(entry.date);
+                    const dateStr = entryDate.toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    });
+
+                    return (
+                      <div
+                        key={entry.id || index}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleEditTimeLog(entry)}
+                        title="Click to edit this time log"
+                        data-testid={`entry-${entry.id}`}
+                      >
+                        <span className="min-w-0 text-sm font-medium text-foreground">{dateStr}</span>
+                        <span className="whitespace-nowrap text-sm text-muted-foreground font-mono">
+                          {formatTimeDisplay(entry.duration)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ))
+        )}
       </div>
 
       {/* Time Log Modal */}

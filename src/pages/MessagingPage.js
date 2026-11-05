@@ -3,14 +3,14 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Send, MessageSquare, User, Loader2 } from 'lucide-react';
+import { Send, MessageSquare, User, Loader2, ChevronLeft } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 // ─── Shared: Chat Window ──────────────────────────────────────────────────────
 
-const ChatWindow = ({ messages, currentUserId, otherUser, onSend, sending }) => {
+const ChatWindow = ({ messages, currentUserId, otherUser, onSend, sending, onBack }) => {
     const [text, setText] = useState('');
     const bottomRef = useRef(null);
 
@@ -55,18 +55,30 @@ const ChatWindow = ({ messages, currentUserId, otherUser, onSend, sending }) => 
     return (
         <div className="flex flex-col h-full">
             {/* Chat Header */}
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-border bg-card">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card sm:px-6 sm:py-4">
+                {onBack && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={onBack}
+                        className="h-9 w-9 p-0 md:hidden"
+                        aria-label="Back to conversations"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                )}
                 <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
                     {otherUser?.name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
-                <div>
-                    <p className="font-semibold text-sm">{otherUser?.name || '…'}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{otherUser?.role || ''}</p>
+                <div className="min-w-0">
+                    <p className="font-semibold text-sm truncate">{otherUser?.name || '…'}</p>
+                    <p className="text-xs text-muted-foreground capitalize truncate">{otherUser?.role || ''}</p>
                 </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-1">
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 sm:px-6">
                 {grouped.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
                         <MessageSquare className="h-10 w-10 opacity-30" />
@@ -105,7 +117,7 @@ const ChatWindow = ({ messages, currentUserId, otherUser, onSend, sending }) => 
             </div>
 
             {/* Input */}
-            <form onSubmit={handleSend} className="flex items-center gap-3 px-6 py-4 border-t border-border bg-card">
+            <form onSubmit={handleSend} className="flex items-center gap-3 px-4 py-3 border-t border-border bg-card sm:px-6 sm:py-4">
                 <Input
                     value={text}
                     onChange={(e) => setText(e.target.value)}
@@ -174,7 +186,7 @@ const EmployeeMessaging = ({ token, currentUser }) => {
     };
 
     return (
-        <div className="bg-card border border-border rounded-xl overflow-hidden" style={{ height: 'calc(100vh - 140px)' }}>
+        <div className="bg-card border border-border rounded-xl overflow-hidden h-[calc(100dvh-140px)] min-h-[320px]">
             <ChatWindow
                 messages={messages}
                 currentUserId={currentUser.id}
@@ -280,58 +292,85 @@ const AdminMessaging = ({ token, currentUser }) => {
         setSending(false);
     };
 
-    return (
-        <div
-            className="bg-card border border-border rounded-xl overflow-hidden flex"
-            style={{ height: 'calc(100vh - 140px)' }}
-        >
-            {/* Left: conversation list */}
-            <div className="w-72 border-r border-border flex flex-col flex-shrink-0">
-                <div className="px-5 py-4 border-b border-border">
-                    <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Conversations</h2>
+    const conversationList = (
+        <div className="flex-1 min-h-0 overflow-y-auto">
+            {loadingConversations ? (
+                <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
                 </div>
-                <div className="flex-1 overflow-y-auto">
-                    {loadingConversations ? (
-                        <div className="flex justify-center py-8">
-                            <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+            ) : conversations.length === 0 ? (
+                <div className="p-6 text-sm text-muted-foreground text-center">No employees yet.</div>
+            ) : conversations.map((emp) => (
+                <button
+                    key={emp.user_id}
+                    onClick={() => handleSelectEmployee(emp)}
+                    data-testid={`conversation-${emp.user_id}`}
+                    className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-muted/30 transition-colors text-left border-b border-border/50 sm:px-5 sm:py-4 ${selectedEmployee?.user_id === emp.user_id ? 'bg-muted/40' : ''
+                        }`}
+                >
+                    {/* Avatar */}
+                    <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
+                        {emp.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                            <span className="font-medium text-sm truncate">{emp.name}</span>
+                            {emp.unread_count > 0 && (
+                                <span className="ml-2 flex-shrink-0 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                                    {emp.unread_count}
+                                </span>
+                            )}
                         </div>
-                    ) : conversations.length === 0 ? (
-                        <div className="p-6 text-sm text-muted-foreground text-center">No employees yet.</div>
-                    ) : conversations.map((emp) => (
-                        <button
-                            key={emp.user_id}
-                            onClick={() => handleSelectEmployee(emp)}
-                            data-testid={`conversation-${emp.user_id}`}
-                            className={`w-full flex items-start gap-3 px-5 py-4 hover:bg-muted/30 transition-colors text-left border-b border-border/50 ${selectedEmployee?.user_id === emp.user_id ? 'bg-muted/40' : ''
-                                }`}
-                        >
-                            {/* Avatar */}
-                            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
-                                {emp.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
-                                    <span className="font-medium text-sm truncate">{emp.name}</span>
-                                    {emp.unread_count > 0 && (
-                                        <span className="ml-2 flex-shrink-0 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-                                            {emp.unread_count}
-                                        </span>
-                                    )}
-                                </div>
-                                {emp.last_message ? (
-                                    <p className="text-xs text-muted-foreground truncate mt-0.5">{emp.last_message}</p>
-                                ) : (
-                                    <p className="text-xs text-muted-foreground/50 italic mt-0.5">No messages yet</p>
-                                )}
-                            </div>
-                        </button>
-                    ))}
+                        {emp.last_message ? (
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">{emp.last_message}</p>
+                        ) : (
+                            <p className="text-xs text-muted-foreground/50 italic mt-0.5">No messages yet</p>
+                        )}
+                    </div>
+                </button>
+            ))}
+        </div>
+    );
 
+    return (
+        <>
+            {/* Desktop: two columns */}
+            <div className="hidden md:flex bg-card border border-border rounded-xl overflow-hidden h-[calc(100vh-140px)] min-h-0">
+                {/* Left: conversation list */}
+                <div className="w-72 border-r border-border flex flex-col flex-shrink-0 min-h-0">
+                    <div className="px-5 py-4 border-b border-border">
+                        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Conversations</h2>
+                    </div>
+                    {conversationList}
+                </div>
+
+                {/* Right: chat */}
+                <div className="flex-1 flex flex-col min-w-0 min-h-0">
+                    {selectedEmployee ? (
+                        loadingMessages && messages.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-full">
+                                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                            </div>
+                        ) : (
+                            <ChatWindow
+                                messages={messages}
+                                currentUserId={currentUser.id}
+                                otherUser={{ name: selectedEmployee.name, role: 'employee' }}
+                                onSend={handleSend}
+                                sending={sending}
+                            />
+                        )
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
+                            <User className="h-12 w-12 opacity-20" />
+                            <p className="text-sm">Select a conversation to start messaging</p>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Right: chat */}
-            <div className="flex-1 flex flex-col min-w-0">
+            {/* Mobile: single panel */}
+            <div className="md:hidden bg-card border border-border rounded-xl overflow-hidden h-[calc(100dvh-140px)] min-h-[320px]">
                 {selectedEmployee ? (
                     loadingMessages && messages.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full">
@@ -344,16 +383,19 @@ const AdminMessaging = ({ token, currentUser }) => {
                             otherUser={{ name: selectedEmployee.name, role: 'employee' }}
                             onSend={handleSend}
                             sending={sending}
+                            onBack={() => setSelectedEmployee(null)}
                         />
                     )
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
-                        <User className="h-12 w-12 opacity-20" />
-                        <p className="text-sm">Select a conversation to start messaging</p>
+                    <div className="flex flex-col h-full min-h-0">
+                        <div className="px-4 py-3 border-b border-border">
+                            <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Conversations</h2>
+                        </div>
+                        {conversationList}
                     </div>
                 )}
             </div>
-        </div>
+        </>
     );
 };
 
@@ -366,10 +408,10 @@ export const MessagingPage = () => {
     return (
         <div className="space-y-6" data-testid="messaging-page">
             <div>
-                <h1 className="text-4xl font-bold tracking-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                     Messages
                 </h1>
-                <p className="text-muted-foreground mt-1 text-sm">
+                <p className="text-muted-foreground mt-1 text-sm sm:text-base">
                     {isAdmin ? 'Reply to messages from your team.' : 'Send a message to Admin.'}
                 </p>
             </div>

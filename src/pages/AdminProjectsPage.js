@@ -191,25 +191,25 @@ export const AdminProjectsPage = () => {
   };
 
   return (
-    <div className="space-y-6" data-testid="admin-projects-page">
+    <div className="space-y-4 sm:space-y-6" data-testid="admin-projects-page">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold tracking-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
           {t('adminProjects.title')}
         </h1>
-        <p className="text-base text-muted-foreground leading-relaxed mt-2">
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed sm:text-base">
           {t('adminProjects.subtitle')}
         </p>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="projects" className="w-full">
-        <TabsList>
-          <TabsTrigger value="projects" data-testid="projects-tab">
+        <TabsList className="grid w-full grid-cols-2 gap-1 h-auto sm:inline-flex sm:w-auto">
+          <TabsTrigger value="projects" data-testid="projects-tab" className="min-w-0 w-full min-h-10 whitespace-nowrap text-xs sm:text-sm sm:w-auto">
             <FolderKanban className="h-4 w-4 mr-2" />
             {t('adminProjects.tabs.projects')}
           </TabsTrigger>
-          <TabsTrigger value="tasks" data-testid="tasks-tab">
+          <TabsTrigger value="tasks" data-testid="tasks-tab" className="min-w-0 w-full min-h-10 whitespace-nowrap text-xs sm:text-sm sm:w-auto">
             <ListChecks className="h-4 w-4 mr-2" />
             {t('adminProjects.tabs.tasks')}
           </TabsTrigger>
@@ -217,22 +217,23 @@ export const AdminProjectsPage = () => {
 
         {/* Projects Tab */}
         <TabsContent value="projects" className="space-y-4">
-          <div className="flex justify-end">
-            <Button onClick={openCreateProject} data-testid="create-project-btn">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <Button onClick={openCreateProject} data-testid="create-project-btn" className="h-9 w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               {t('adminProjects.addProject')}
             </Button>
           </div>
 
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
+          {/* Responsive Table */}
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left" data-testid="projects-table">
+              <table className="w-full min-w-[640px] text-sm text-left" data-testid="projects-table">
                 <thead className="bg-muted/50 text-muted-foreground font-medium">
                   <tr>
-                    <th className="p-4 align-middle">{t('adminProjects.projectsTable.name')}</th>
-                    <th className="p-4 align-middle">{t('adminProjects.projectsTable.description')}</th>
-                    <th className="p-4 align-middle">{t('adminProjects.projectsTable.status')}</th>
-                    <th className="p-4 align-middle text-right">{t('adminProjects.projectsTable.actions')}</th>
+                    <th className="p-3 align-middle whitespace-nowrap sm:p-4">{t('adminProjects.projectsTable.name')}</th>
+                    <th className="p-3 align-middle whitespace-nowrap sm:p-4">{t('adminProjects.projectsTable.description')}</th>
+                    <th className="p-3 align-middle whitespace-nowrap sm:p-4">{t('adminProjects.projectsTable.status')}</th>
+                    <th className="p-3 align-middle text-right whitespace-nowrap sm:p-4">{t('adminProjects.projectsTable.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -253,9 +254,9 @@ export const AdminProjectsPage = () => {
                   ) : (
                     projects.map((project) => (
                       <tr key={project.id} className="border-b border-border hover:bg-muted/20 transition-colors">
-                        <td className="p-4 align-middle font-medium">{project.name}</td>
-                        <td className="p-4 align-middle text-muted-foreground">{project.description || '-'}</td>
-                        <td className="p-4 align-middle">
+                        <td className="p-4 align-middle font-medium min-w-0">{project.name}</td>
+                        <td className="p-4 align-middle text-muted-foreground min-w-0">{project.description || '-'}</td>
+                        <td className="p-3 align-middle whitespace-nowrap sm:p-4">
                           <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-green-100 text-green-800">
                             {project.status}
                           </span>
@@ -266,13 +267,14 @@ export const AdminProjectsPage = () => {
                             variant="ghost"
                             onClick={() => openEditProject(project)}
                             data-testid={`edit-project-${project.id}`}
+                            className="h-8 w-8 p-0"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
                             onClick={() => handleDeleteProject(project.id)}
                             disabled={deletingProjectIds.includes(project.id)}
                             data-testid={`delete-project-${project.id}`}
@@ -291,27 +293,29 @@ export const AdminProjectsPage = () => {
               </table>
             </div>
           </div>
+
         </TabsContent>
 
         {/* Tasks Tab */}
         <TabsContent value="tasks" className="space-y-4">
-          <div className="flex justify-end">
-            <Button onClick={openCreateTask} data-testid="create-task-btn">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <Button onClick={openCreateTask} data-testid="create-task-btn" className="h-9 w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               {t('adminProjects.addTask')}
             </Button>
           </div>
 
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
+          {/* Responsive Table */}
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left" data-testid="tasks-table">
+              <table className="w-full min-w-[720px] text-sm text-left" data-testid="tasks-table">
                 <thead className="bg-muted/50 text-muted-foreground font-medium">
                   <tr>
-                    <th className="p-4 align-middle">{t('adminProjects.tasksTable.name')}</th>
-                    <th className="p-4 align-middle">{t('adminProjects.tasksTable.project')}</th>
-                    <th className="p-4 align-middle">{t('adminProjects.tasksTable.description')}</th>
-                    <th className="p-4 align-middle">{t('adminProjects.tasksTable.status')}</th>
-                    <th className="p-4 align-middle text-right">{t('adminProjects.tasksTable.actions')}</th>
+                    <th className="p-3 align-middle whitespace-nowrap sm:p-4">{t('adminProjects.tasksTable.name')}</th>
+                    <th className="p-3 align-middle whitespace-nowrap sm:p-4">{t('adminProjects.tasksTable.project')}</th>
+                    <th className="p-3 align-middle whitespace-nowrap sm:p-4">{t('adminProjects.tasksTable.description')}</th>
+                    <th className="p-3 align-middle whitespace-nowrap sm:p-4">{t('adminProjects.tasksTable.status')}</th>
+                    <th className="p-3 align-middle text-right whitespace-nowrap sm:p-4">{t('adminProjects.tasksTable.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -334,10 +338,10 @@ export const AdminProjectsPage = () => {
                       const project = projects.find(p => p.id === task.project_id);
                       return (
                         <tr key={task.id} className="border-b border-border hover:bg-muted/20 transition-colors">
-                          <td className="p-4 align-middle font-medium">{task.name}</td>
-                          <td className="p-4 align-middle">{project?.name || t('adminProjects.messages.unknownProject')}</td>
-                          <td className="p-4 align-middle text-muted-foreground">{task.description || '-'}</td>
-                          <td className="p-4 align-middle">
+                          <td className="p-4 align-middle font-medium min-w-0">{task.name}</td>
+                          <td className="p-4 align-middle min-w-0">{project?.name || t('adminProjects.messages.unknownProject')}</td>
+                          <td className="p-4 align-middle text-muted-foreground min-w-0">{task.description || '-'}</td>
+                          <td className="p-3 align-middle whitespace-nowrap sm:p-4">
                             <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-green-100 text-green-800">
                               {task.status}
                             </span>
@@ -348,13 +352,14 @@ export const AdminProjectsPage = () => {
                               variant="ghost"
                               onClick={() => openEditTask(task)}
                               data-testid={`edit-task-${task.id}`}
+                              className="h-8 w-8 p-0"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
                               onClick={() => handleDeleteTask(task.id)}
                               disabled={deletingTaskIds.includes(task.id)}
                               data-testid={`delete-task-${task.id}`}
@@ -374,12 +379,13 @@ export const AdminProjectsPage = () => {
               </table>
             </div>
           </div>
+
         </TabsContent>
       </Tabs>
 
       {/* Project Dialog */}
       <Dialog open={showProjectDialog} onOpenChange={setShowProjectDialog}>
-        <DialogContent data-testid="project-dialog">
+        <DialogContent className="w-full max-w-lg max-h-[90vh] overflow-y-auto" data-testid="project-dialog">
           <DialogHeader>
             <DialogTitle>{isEditingProject ? t('adminProjects.projectDialog.editTitle') : t('adminProjects.projectDialog.createTitle')}</DialogTitle>
           </DialogHeader>
@@ -412,7 +418,7 @@ export const AdminProjectsPage = () => {
 
       {/* Task Dialog */}
       <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
-        <DialogContent data-testid="task-dialog">
+        <DialogContent className="w-full max-w-lg max-h-[90vh] overflow-y-auto" data-testid="task-dialog">
           <DialogHeader>
             <DialogTitle>{isEditingTask ? t('adminProjects.taskDialog.editTitle') : t('adminProjects.taskDialog.createTitle')}</DialogTitle>
           </DialogHeader>
