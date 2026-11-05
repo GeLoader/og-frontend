@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { toast } from 'sonner';
 import { Eye, Send, RotateCcw, Loader2 } from 'lucide-react';
-import { formatTimeHHMMSS, formatDurationHHMMSS } from '../lib/utils';
+import { formatTimeHHMMSS, formatDurationHHMMSS, parseEntryDate } from '../lib/utils';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -387,7 +387,7 @@ export const TimesheetsPage = () => {
 
                       return (
                         <tr key={entry.id} className="border-t hover:bg-muted/20">
-                          <td className="p-3">{new Date(entry.date).toLocaleDateString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                          <td className="p-3">{parseEntryDate(entry).toLocaleDateString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</td>
                           <td className="p-3">
                             {formatTimeHHMMSS(entry.start_time)}
                           </td>

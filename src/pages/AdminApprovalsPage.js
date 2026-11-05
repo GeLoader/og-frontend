@@ -10,6 +10,12 @@ import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { toast } from 'sonner';
 import { Check, X, Eye, Edit, Loader2 } from 'lucide-react';
+import {
+  createDateAsBerlinTime,
+  formatTimeBerlin,
+  getEntryDateString,
+  parseEntryDate,
+} from '../lib/utils';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -31,13 +37,6 @@ const formatMinutesToTime = (minutes) => {
   return `${hours}:${String(mins).padStart(2, '0')}`;
 };
 
-const formatTime = (date) => {
-  const d = new Date(date);
-  const hours = d.getHours();
-  const minutes = d.getMinutes();
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-};
-
 // Time Log Modal Component (same as TimeTrackerPage)
 const TimeLogModal = ({ isOpen, onClose, timeEntry, onSave, onDelete, projects, allTasks, isSaving, isDeleting }) => {
   const [duration, setDuration] = useState('');
@@ -53,14 +52,12 @@ const TimeLogModal = ({ isOpen, onClose, timeEntry, onSave, onDelete, projects, 
       const durationMinutes = Math.floor(timeEntry.duration / 60);
       setDuration(formatMinutesToTime(durationMinutes));
 
-      // Format start and end times
-      const startDate = new Date(timeEntry.start_time);
-      const endDate = new Date(timeEntry.end_time);
-      setStartTime(formatTime(startDate));
-      setEndTime(formatTime(endDate));
+      // Format start and end times in the application timezone (Europe/Berlin)
+      setStartTime(formatTimeBerlin(timeEntry.start_time));
+      setEndTime(formatTimeBerlin(timeEntry.end_time));
 
       // Format date (avoid Date/UTC round-trip so the day cannot shift)
-      setDate(String(timeEntry.date || '').slice(0, 10));
+      setDate(getEntryDateString(timeEntry));
 
       setProjectId(timeEntry.project_id || '');
       setTaskId(timeEntry.task_id || '');
@@ -471,9 +468,9 @@ export const AdminApprovalsPage = () => {
 
     setIsSavingEntry(true);
     try {
-      // Create datetime strings
-      const startDateTime = new Date(`${updatedEntry.date}T${updatedEntry.startTime}:00`);
-      const endDateTime = new Date(`${updatedEntry.date}T${updatedEntry.endTime}:00`);
+      // Create datetime strings in the application timezone (Europe/Berlin)
+      const startDateTime = createDateAsBerlinTime(updatedEntry.date, updatedEntry.startTime);
+      const endDateTime = createDateAsBerlinTime(updatedEntry.date, updatedEntry.endTime);
       // Overnight shift: end time on the next day instead of a negative duration
       if (endDateTime < startDateTime) {
         endDateTime.setDate(endDateTime.getDate() + 1);
@@ -924,9 +921,9 @@ export const AdminApprovalsPage = () => {
 
                       return (
                         <tr key={entry.id} className="border-t hover:bg-muted/20">
-                          <td className="p-3">{new Date(entry.date).toLocaleDateString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                          <td className="p-3">{parseEntryDate(entry).toLocaleDateString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</td>
                           <td className="p-3">
-                            {new Date(entry.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {formatTimeBerlin(entry.start_time)}
                           </td>
                           <td className="p-3">{project?.name || 'No Project'}</td>
                           <td className="p-3">{task?.name || 'No Task'}</td>

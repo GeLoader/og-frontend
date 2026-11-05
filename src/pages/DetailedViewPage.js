@@ -22,6 +22,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
+import {
+  createDateAsBerlinTime,
+  formatTimeBerlin,
+  getEntryDateString,
+  parseEntryDate,
+} from '../lib/utils';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -81,14 +87,6 @@ const parseTimeToMinutes = (timeStr) => {
   return hours * 60 + minutes;
 };
 
-// Helper function to format time to HH:MM
-const formatTime = (date) => {
-  const d = new Date(date);
-  const hours = d.getHours();
-  const minutes = d.getMinutes();
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-};
-
 // Helper function to format time to 12-hour format with AM/PM
 const formatTime12Hour = (timeStr) => {
   if (!timeStr) return '';
@@ -97,66 +95,6 @@ const formatTime12Hour = (timeStr) => {
   let hours12 = hours24 % 12;
   if (hours12 === 0) hours12 = 12;
   return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
-};
-
-// NEW: Helper to create a Date object representing a specific date/time in Berlin/Germany timezone (GMT+1/GMT+2)
-const createDateAsBerlinTime = (dateStr, timeStr) => {
-  // 1. Parse inputs
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const [hour, minute] = timeStr.split(':').map(Number);
-
-  // 2. Create a candidate UTC date with the given components
-  // We use UTC methods to avoid local browser timezone interference initially
-  const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
-
-  // 3. Setup formatter for Berlin
-  const formatOptions = {
-    timeZone: 'Europe/Berlin',
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric',
-    hour12: false, // 24-hour format
-    hourCycle: 'h23' // FORCE 0-23
-  };
-  const formatter = new Intl.DateTimeFormat('en-US', formatOptions);
-
-  // 4. Check the offset
-  // We need to find a UTC timestamp X such that X formatted in Berlin = user's desired time.
-  // Approximation:
-  // Berlin is UTC+1 (winter) or UTC+2 (summer).
-  // Try assuming UTC+1 first (subtract 1 hour from target)
-  const offset = 1 * 60 * 60 * 1000;
-  let currentT = utcDate.getTime() - offset;
-
-  // Iterate to converge (usually 1-2 steps)
-  for (let i = 0; i < 3; i++) {
-    const d = new Date(currentT);
-    const parts = formatter.formatToParts(d);
-
-    const pYear = parseInt(parts.find(p => p.type === 'year').value);
-    const pMonth = parseInt(parts.find(p => p.type === 'month').value);
-    const pDay = parseInt(parts.find(p => p.type === 'day').value);
-    let pHour = parseInt(parts.find(p => p.type === 'hour').value);
-    const pMinute = parseInt(parts.find(p => p.type === 'minute').value);
-
-    // FIX: Handle 24:00 returned by some Intl implementations for midnight
-    if (pHour === 24) pHour = 0;
-
-    // Construct the time we got
-    const gotTime = Date.UTC(pYear, pMonth - 1, pDay, pHour, pMinute);
-    const targetTime = Date.UTC(year, month - 1, day, hour, minute);
-
-    const diff = targetTime - gotTime;
-
-    if (diff === 0) break; // Exact match found
-
-    currentT += diff;
-  }
-
-  return new Date(currentT);
 };
 
 // Time Log Modal Component
@@ -484,13 +422,13 @@ export const DetailedViewPage = () => {
       switch (sumBy) {
         case 'week':
           // Group by user and week
-          const weekStart = getWeekStart(new Date(entry.date));
+          const weekStart = getWeekStart(parseEntryDate(entry));
           const weekKey = formatDateISO(weekStart);
           key = `${entry.user_id}_week_${weekKey}`;
           break;
         case 'month':
           // Group by user and month
-          const entryDate = new Date(entry.date);
+          const entryDate = parseEntryDate(entry);
           const monthKey = `${entryDate.getFullYear()}-${String(entryDate.getMonth() + 1).padStart(2, '0')}`;
           key = `${entry.user_id}_month_${monthKey}`;
           break;
@@ -504,7 +442,7 @@ export const DetailedViewPage = () => {
           // Group by user, project, and day
           const userId = entry.user_id;
           const projId = entry.project_id || 'no-project';
-          const dateKey = formatDateISO(new Date(entry.date));
+          const dateKey = getEntryDateString(entry);
           key = `${userId}_${projId}_${dateKey}`;
           break;
       }
@@ -622,10 +560,10 @@ export const DetailedViewPage = () => {
   const handleEditTimeLog = (entry) => {
     setEditingTimeLog({
       id: entry.id,
-      date: formatDateISO(new Date(entry.date)),
+      date: getEntryDateString(entry),
       duration: Math.floor((entry.duration || 0) / 60), // modal works in minutes
-      startTime: formatTime(new Date(entry.start_time)),
-      endTime: formatTime(new Date(entry.end_time)),
+      startTime: formatTimeBerlin(entry.start_time),
+      endTime: formatTimeBerlin(entry.end_time),
       notes: entry.notes || '',
       project_id: entry.project_id || '',
       task_id: entry.task_id || ''
@@ -955,7 +893,7 @@ export const DetailedViewPage = () => {
                           <div className="space-y-2">
                             <h4 className="font-semibold text-sm mb-3 text-foreground">{t('detailedView.table.dailyBreakdown')}</h4>
                             {group.entries.map((entry, index) => {
-                              const entryDate = new Date(entry.date);
+                              const entryDate = parseEntryDate(entry);
                               const dateStr = entryDate.toLocaleDateString('en-US', {
                                 weekday: 'short',
                                 year: 'numeric',
@@ -1036,7 +974,7 @@ export const DetailedViewPage = () => {
                 <div className="space-y-2 border-t border-border pt-3">
                   <h4 className="font-semibold text-sm text-foreground">{t('detailedView.table.dailyBreakdown')}</h4>
                   {group.entries.map((entry, index) => {
-                    const entryDate = new Date(entry.date);
+                    const entryDate = parseEntryDate(entry);
                     const dateStr = entryDate.toLocaleDateString('en-US', {
                       weekday: 'short',
                       year: 'numeric',

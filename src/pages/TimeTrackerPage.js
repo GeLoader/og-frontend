@@ -8,6 +8,7 @@ import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { ChevronLeft, ChevronRight, Home, Plus, ArrowUpDown, Trash2, ChevronDown, ChevronRight as ChevronRightIcon, Edit2, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { createDateAsBerlinTime, formatTimeBerlin, getEntryDateString } from '../lib/utils';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -82,14 +83,6 @@ const formatMinutesToTime = (minutes) => {
   return `${hours}:${String(mins).padStart(2, '0')}`;
 };
 
-// Helper function to format time to HH:MM
-const formatTime = (date) => {
-  const d = new Date(date);
-  const hours = d.getHours();
-  const minutes = d.getMinutes();
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-};
-
 // Helper function to format time to 12-hour format with AM/PM
 const formatTime12Hour = (timeStr) => {
   if (!timeStr) return '';
@@ -103,65 +96,6 @@ const formatTime12Hour = (timeStr) => {
   if (hours12 === 0) hours12 = 12; // Handle midnight and noon
 
   return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
-};
-
-// NEW: Helper to create a Date object representing a specific date/time in Berlin/Germany timezone (GMT+1/GMT+2)
-const createDateAsBerlinTime = (dateStr, timeStr) => {
-  // 1. Parse inputs
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const [hour, minute] = timeStr.split(':').map(Number);
-
-  // 2. Create a candidate UTC date with the given components
-  // We use UTC methods to avoid local browser timezone interference initially
-  const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
-
-  // 3. Setup formatter for Berlin
-  const formatOptions = {
-    timeZone: 'Europe/Berlin',
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric',
-    hour12: false, // 24-hour format
-    hourCycle: 'h23' // FORCE 0-23
-  };
-  const formatter = new Intl.DateTimeFormat('en-US', formatOptions);
-
-  // 4. Check the offset
-  // We need to find a UTC timestamp X such that X formatted in Berlin = user's desired time.
-  // Approximation:
-  // Berlin is UTC+1 (winter) or UTC+2 (summer).
-  // Try assuming UTC+1 first (subtract 1 hour from target)
-  let currentT = utcDate.getTime() - 1 * 60 * 60 * 1000;
-
-  // Iterate to converge (usually 1-2 steps)
-  for (let i = 0; i < 3; i++) {
-    const d = new Date(currentT);
-    const parts = formatter.formatToParts(d);
-
-    const pYear = parseInt(parts.find(p => p.type === 'year').value);
-    const pMonth = parseInt(parts.find(p => p.type === 'month').value);
-    const pDay = parseInt(parts.find(p => p.type === 'day').value);
-    let pHour = parseInt(parts.find(p => p.type === 'hour').value);
-    const pMinute = parseInt(parts.find(p => p.type === 'minute').value);
-
-    // FIX: Handle 24:00 returned by some Intl implementations for midnight
-    if (pHour === 24) pHour = 0;
-
-    // Construct the time we got
-    const gotTime = Date.UTC(pYear, pMonth - 1, pDay, pHour, pMinute);
-    const targetTime = Date.UTC(year, month - 1, day, hour, minute);
-
-    const diff = targetTime - gotTime;
-
-    if (diff === 0) break; // Exact match found
-
-    currentT += diff;
-  }
-
-  return new Date(currentT);
 };
 
 // Time Log Modal Component
@@ -554,9 +488,9 @@ export const TimeTrackerPage = () => {
         }
 
         const row = rowsMap.get(key);
-        // FIXED: Parse the date properly - entry.date already has time component
-        const entryDateObj = new Date(entry.date);
-        const entryDate = formatDateISO(entryDateObj);
+        // entry.date is stored as the calendar date (midnight UTC); avoid a
+        // local-timezone round trip so the day cannot shift.
+        const entryDate = getEntryDateString(entry);
         const durationInMinutes = Math.floor(entry.duration / 60);
         console.log(`📅 Entry date: ${entry.date} → ${entryDate}, Duration: ${entry.duration}s → ${durationInMinutes}min`);
         row.timeByDay[entryDate] = (row.timeByDay[entryDate] || 0) + durationInMinutes;
@@ -575,8 +509,8 @@ export const TimeTrackerPage = () => {
           rowId: key,
           date: entryDate,
           duration: durationInMinutes,
-          startTime: formatTime(startDate),
-          endTime: formatTime(endDate),
+          startTime: formatTimeBerlin(startDate),
+          endTime: formatTimeBerlin(endDate),
           notes: entry.notes || '',
           project_id: entry.project_id,
           task_id: entry.task_id
@@ -725,6 +659,7 @@ export const TimeTrackerPage = () => {
           task_id: normalizedTaskId || null,
           start_time: startDateTime.toISOString(),
           end_time: endDateTime.toISOString(),
+          duration: (log.duration || 0) * 60,
           notes: log.notes || ''
         }, {
           headers: { Authorization: `Bearer ${token}` }
